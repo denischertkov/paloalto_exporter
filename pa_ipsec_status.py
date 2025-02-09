@@ -4,7 +4,7 @@
 # 2 - inactive
 # 3 - other state
 #
-# Denis Cehrtkov, denis@chertkov.info, 20250208
+# Denis Chertkov, denis@chertkov.info, 20250208
 
 from prometheus_client import start_http_server, Gauge
 import time
