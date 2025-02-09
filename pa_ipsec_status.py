@@ -1,3 +1,11 @@
+# This is a prometheus compatibe exporter for the Palo Alto IPSEC tunnel state
+# This exporter returned state of the IPSEC tunnels:
+# 1 - active (established)
+# 2 - inactive
+# 3 - other state
+#
+# Denis Cehrtkov, denis@chertkov.info, 20250208
+
 from prometheus_client import start_http_server, Gauge
 import time
 import paramiko
@@ -7,10 +15,8 @@ import os
 USERNAME = "denis"
 PASSWORD = os.environ.get('PASSWORD')
 HOSTNAME = os.environ.get('HOSTNAME')
-HTTP_SERVER_PORT = os.environ.get('HTTP_SERVER_PORT')
+HTTP_SERVER_PORT = int(os.environ.get('HTTP_SERVER_PORT'))
 PORT = 22
-
-#HTTP_SERVER_PORT = 9099
 
 IPSEC_Status_gauge = Gauge('ifIPSECOperStatus','The current operational state of the interface - 1.3.6.1.2.1.2.2.1.8',
                                     ["ifAlias","ifDescr", "ifIndex", "ifName",   ])
@@ -52,18 +58,18 @@ def get_config(username=USERNAME, password=PASSWORD, hostname=HOSTNAME, port=POR
             flag = True;
 
     # output collected data in prometheuse format
-    print('# HELP ifIPSECOperStatus The current operational state of the interface - 1.3.6.1.2.1.2.2.1.8');
-    print('# TYPE ifIPSECOperStatus gauge');
+#    print('# HELP ifIPSECOperStatus The current operational state of the interface - 1.3.6.1.2.1.2.2.1.8');
+#    print('# TYPE ifIPSECOperStatus gauge');
     for tunnel in ipsec_list:
-        print('ifIPSECOperStatus{ifAlias="',tunnel[1],'",ifDescr="',tunnel[6],'",ifIndex="',tunnel[0],'",ifName="',tunnel[6],'"}', sep="", end=' ');
+#        print('ifIPSECOperStatus{ifAlias="',tunnel[1],'",ifDescr="',tunnel[6],'",ifIndex="',tunnel[0],'",ifName="',tunnel[6],'"}', sep="", end=' ');
         if (tunnel[2]=='active'):
-            print('1', sep="");
+#            print('1', sep="");
             ifStatus=1;
         elif (tunnel[2]=='inactiv'):
-            print('2', sep="");
+#            print('2', sep="");
             ifStatus=2;
         else:
-            print('3', sep="");
+#            print('3', sep="");
             ifStatus=3;
 
         IPSEC_Status_gauge.labels(ifAlias=tunnel[1],
@@ -77,8 +83,7 @@ if __name__ == '__main__':
     start_http_server(HTTP_SERVER_PORT)
     print("Exporter running at http://localhost:", HTTP_SERVER_PORT, sep="")
 
-    # Call the set_gc_incidents_metrics every 60 seconds, indefintely
+    # Refresh the metrics every 30 seconds
     while True:
-        # set_gc_incidents_metrics()
         get_config()
         time.sleep(30)
