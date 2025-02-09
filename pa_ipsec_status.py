@@ -1,16 +1,19 @@
-#!/usr/bin/python3
+from prometheus_client import start_http_server, Gauge
+import time
 import paramiko
 import time
 import os
-import sys
 
-#USERNAME = sys.argv[1]
-#HOSTNAME = sys.argv[2]
-#PASSWORD = os.environ.get('PASSWORD')
 USERNAME = "denis"
-HOSTNAME = "10.210.254.240"
-PASSWORD = "oZ4fY4jN1p@G4"
+PASSWORD = os.environ.get('PASSWORD')
+HOSTNAME = os.environ.get('HOSTNAME')
+HTTP_SERVER_PORT = os.environ.get('HTTP_SERVER_PORT')
 PORT = 22
+
+#HTTP_SERVER_PORT = 9099
+
+IPSEC_Status_gauge = Gauge('ifIPSECOperStatus','The current operational state of the interface - 1.3.6.1.2.1.2.2.1.8',
+                                    ["ifAlias","ifDescr", "ifIndex", "ifName",   ])
 
 def send_get_output(chan, command):
     chan.send(command + '\n')
@@ -48,20 +51,34 @@ def get_config(username=USERNAME, password=PASSWORD, hostname=HOSTNAME, port=POR
         if line.startswith('--    --------------'):
             flag = True;
 
-#    print(list(ipsec_list));
-
     # output collected data in prometheuse format
-    # ifOperStatus{ifAlias="APM_EXTERNAL VLAN",ifDescr="ae1.13",ifIndex="500010013",ifName="ae1.13"} 1
-    print('# HELP ifOperStatus The current operational state of the interface - 1.3.6.1.2.1.2.2.1.8');
-    print('# TYPE ifOperStatus gauge');
+    print('# HELP ifIPSECOperStatus The current operational state of the interface - 1.3.6.1.2.1.2.2.1.8');
+    print('# TYPE ifIPSECOperStatus gauge');
     for tunnel in ipsec_list:
-        print('ifOperStatus{ifAlias="',tunnel[1],'",ifDescr="',tunnel[6],'",ifIndex="',tunnel[0],'",ifName="',tunnel[6],'"}', sep="", end=' ');
+        print('ifIPSECOperStatus{ifAlias="',tunnel[1],'",ifDescr="',tunnel[6],'",ifIndex="',tunnel[0],'",ifName="',tunnel[6],'"}', sep="", end=' ');
         if (tunnel[2]=='active'):
             print('1', sep="");
+            ifStatus=1;
         elif (tunnel[2]=='inactiv'):
             print('2', sep="");
+            ifStatus=2;
         else:
             print('3', sep="");
+            ifStatus=3;
+
+        IPSEC_Status_gauge.labels(ifAlias=tunnel[1],
+                                  ifDescr=tunnel[6],
+                                  ifIndex=tunnel[0],
+                                  ifName=tunnel[6]
+                                  ).set(ifStatus);
 
 if __name__ == '__main__':
-    get_config()
+    # Start up the server to expose the metrics.
+    start_http_server(HTTP_SERVER_PORT)
+    print("Exporter running at http://localhost:", HTTP_SERVER_PORT, sep="")
+
+    # Call the set_gc_incidents_metrics every 60 seconds, indefintely
+    while True:
+        # set_gc_incidents_metrics()
+        get_config()
+        time.sleep(30)
