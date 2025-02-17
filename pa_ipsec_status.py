@@ -1,14 +1,13 @@
-# This is a prometheus compatibe exporter for the Palo Alto IPSEC tunnel state
-# This exporter returned ifIPSECOperStatus of the IPSEC tunnels:
+# This is a Prometheus compatibe exporter for the Palo Alto IPSec tunnel state
+# This exporter returned ifIPSECOperStatus of the IPSec tunnels:
 # 1 - active (established)
 # 2 - inactive
 # 3 - other state
 # The "ifAlias", "ifDescr", "ifIndex" and "ifName" fields are supported
 #
-# ver 1.3
+# ver 1.3.1
 # Denis Chertkov, denis@chertkov.info, 20250217
 
-import time
 import paramiko
 import time
 import os
