@@ -5,7 +5,7 @@
 # 3 - other state
 # The "ifAlias", "ifDescr", "ifIndex" and "ifName" fields are supported
 #
-# ver 1.3.1
+# ver 1.3.2
 # Denis Chertkov, denis@chertkov.info, 20250217
 
 import paramiko
@@ -21,7 +21,8 @@ PORT = 22
 
 IPSEC_Status_gauge = Gauge('ifIPSECOperStatus',
                            'The current operational state of the interface - 1.3.6.1.2.1.2.2.1.8',
-                           ["ifAlias", "ifDescr", "ifIndex", "ifName" ])
+                           ["ifAlias", "ifDescr", "ifIndex", "ifName"])
+
 
 def send_get_output(chan, command):
     chan.send(command + '\n')
@@ -33,7 +34,8 @@ def send_get_output(chan, command):
             break
         buff += str(resp, 'UTF-8')
 
-    return buff;
+    return buff
+
 
 def get_config(username=USERNAME, password=PASSWORD, hostname=HOSTNAME, port=PORT):
     client = paramiko.SSHClient()
@@ -42,36 +44,37 @@ def get_config(username=USERNAME, password=PASSWORD, hostname=HOSTNAME, port=POR
     client.connect(hostname, port, username, password)
     chan = client.invoke_shell()
     send_get_output(chan, 'set cli pager off')
-    status=send_get_output(chan, 'show vpn flow')                               # get the IPSEC tunnels status output
+    status = send_get_output(chan, 'show vpn flow')                               # get the IPSEC tunnels status output
     send_get_output(chan, 'exit')
     client.close()
 
     # "show vpn flow" command output parsing
-    ipsec_list=[]
-    flag = False;
+    ipsec_list = []
+    flag = False
     for line in status.split('\r\n'):
-        if flag == True:
-            if len(line)>3:
-                ipsec_list.append(line.split())
+        if flag is True:
+            if len(line) > 3:
+                ipsec_list.append(line.split())                                 # parse values for ifAlias, ifDescr, ifIndex and ifName
             else:
-                break;
+                break
         if line.startswith('--    --------------'):
             flag = True
 
-    # output collected data in prometheuse format
+    # parse the tunnel state
     for tunnel in ipsec_list:
-        if (tunnel[2]=='active'):
-            ifStatus=1
-        elif (tunnel[2]=='inactiv'):
-            ifStatus=2
+        if (tunnel[2] == 'active'):
+            ifStatus = 1
+        elif (tunnel[2] == 'inactiv'):
+            ifStatus = 2
         else:
-            ifStatus=3
+            ifStatus = 3
 
         IPSEC_Status_gauge.labels(ifAlias=tunnel[1],
                                   ifDescr=tunnel[6],
                                   ifIndex=tunnel[0],
                                   ifName=tunnel[6]
                                   ).set(ifStatus)
+
 
 if __name__ == '__main__':
     if None in [USERNAME, PASSWORD, HOSTNAME, HTTP_SERVER_PORT]:

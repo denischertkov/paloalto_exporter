@@ -8,11 +8,11 @@ From the CLI with the "show vpn flow" command we can see the actual picture:
 ```
 user@PA-A(active)> show vpn flow
 
-total tunnels configured:                                     7
+total tunnels configured:                                     5
 filter - type IPSec, state any
 
-total IPSec tunnel configured:                                6
-total IPSec tunnel shown:                                     6
+total IPSec tunnel configured:                                4
+total IPSec tunnel shown:                                     4
 
 id    name                                                            state   monitor local-ip                      peer-ip                       tunnel-i/f
 --    --------------                                                  -----   ------- --------                      -------                       ----------  
@@ -61,14 +61,14 @@ The OS envs PE_USERNAME, PE_PASSWORD, PE_HOSTNAME and PE_HTTP_SERVER_PORT must b
 ```
 PE_USERNAME="monitoring_user" PE_PASSWORD="SECRET_PASSWORD" PE_HOSTNAME="10.10.10.240" PE_HTTP_SERVER_PORT=9098 python3 /opt/monitoring/pa_ipsec/pa_ipsec_status.py
 ```
-If you want to run the exporter as a systemd service, you need to create the systemd service file pa_ipsec.service with the following contents:
+If you want to run the exporter as a systemd service, you need to create the systemd service file pa_ipsec.service with the following contents (please don't forget to replace the MONITORING_USER, SECRET_PASSWORD and 10.10.10.240 to the actual values):
 ```
 [Unit]
 Description=pa_ipsec
 After=network.target
 
 [Service]
-Environment=PE_USERNAME="monitoring_user" PE_PASSWORD="SECRET_PASSWORD" PE_HOSTNAME="10.10.10.240" PE_HTTP_SERVER_PORT=9098
+Environment=PE_USERNAME="MONITORING_USER" PE_PASSWORD="SECRET_PASSWORD" PE_HOSTNAME="10.10.10.240" PE_HTTP_SERVER_PORT=9098
 ExecStart=/bin/python3 /opt/monitoring/pa_ipsec/pa_ipsec_status.py
 Restart=always
 RestartSec=3
